@@ -22,6 +22,6 @@ public class Employee extends BaseEntity {
     @Column(name = "name", unique = true, nullable = false)
     private String name;
 
-    @OneToMany(mappedBy = "employee")
+    @OneToMany(mappedBy = "employee", fetch = FetchType.EAGER)
     private Set<Skill> skills = new HashSet<>();
 }
