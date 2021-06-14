@@ -1,17 +1,15 @@
 package com.example.demo;
 
 import com.example.demo.model.Employee;
-import com.example.demo.model.Employee_;
-import com.example.demo.model.Skill;
-import com.example.demo.model.Skill_;
+import com.example.demo.model.QEmployee;
+import com.example.demo.model.QSkill;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.hibernate.Session;
 import org.hibernate.cfg.Configuration;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import javax.persistence.criteria.*;
-import java.util.List;
 
 @SpringBootApplication
 public class DemoApplication implements CommandLineRunner {
@@ -19,6 +17,13 @@ public class DemoApplication implements CommandLineRunner {
     public static void main(String[] args) {
         SpringApplication.run(DemoApplication.class, args);
     }
+
+    // to Settings -> Build, Ex... -> Compiler -> Annotation Pro...
+    // add Proccesoor FQ Name :
+    //  org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor - FOR CRITERIA
+    // FOR QueryDSL
+    // lombok.launch.AnnotationProcessorHider$AnnotationProcessor
+    // com.querydsl.apt.jpa.JPAAnnotationProcessor
 
     @Override
     public void run(String... args) throws Exception {
@@ -49,59 +54,54 @@ public class DemoApplication implements CommandLineRunner {
 //        session.save(skill3);
 //        session.save(skill4);
 
-
+//
         getAllEmployee(session);
         getEmployeeByName(session);
         getEmployeeBySkill(session);
-        getNameAndSkill(session);
+//        getNameAndSkill(session);
 
         session.getTransaction().commit();
         session.close();
     }
 
-    private void getNameAndSkill(Session session) {
-        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-        CriteriaQuery<Object[]> criteria = criteriaBuilder.createQuery(Object[].class);
-        Root<Skill> skill = criteria.from(Skill.class);
-        Join<Skill, Employee> employee = skill.join(Skill_.employee, JoinType.LEFT);
-
-        criteria
-                .multiselect(employee.get(Employee_.NAME), skill.get(Skill_.skillName))
-                .orderBy(criteriaBuilder.asc(employee.get(Employee_.name)));
-        List<Object[]> resultList = session.createQuery(criteria).getResultList();
-        resultList.forEach(s -> System.out.println(s[0] + " - " + s[1]));
-    }
-
+    //    private void getNameAndSkill(Session session) {
+//        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+//        CriteriaQuery<Object[]> criteria = criteriaBuilder.createQuery(Object[].class);
+//        Root<Skill> skill = criteria.from(Skill.class);
+//        Join<Skill, Employee> employee = skill.join(Skill_.employee, JoinType.LEFT);
+//
+//        criteria
+//                .multiselect(employee.get(Employee_.NAME), skill.get(Skill_.skillName))
+//                .orderBy(criteriaBuilder.asc(employee.get(Employee_.name)));
+//        List<Object[]> resultList = session.createQuery(criteria).getResultList();
+//        resultList.forEach(s -> System.out.println(s[0] + " - " + s[1]));
+//    }
+//
     private void getAllEmployee(Session session) {
-        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-        CriteriaQuery<Employee> criteriaQuery = criteriaBuilder.createQuery(Employee.class);
-        criteriaQuery.from(Employee.class);
-
-        List<Employee> employeeList = session.createQuery(criteriaQuery).getResultList();
-        employeeList.forEach(System.out::println);
+        JPAQueryFactory jpaQueryFactory = new JPAQueryFactory(session);
+        JPAQuery<Employee> query = jpaQueryFactory.selectFrom(QEmployee.employee);
+        query.fetchResults().getResults().forEach(System.out::println);
     }
 
+    //
     private void getEmployeeBySkill(Session session) {
-        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-        CriteriaQuery<Employee> criteriaQuery = criteriaBuilder.createQuery(Employee.class);
+        JPAQuery<Employee> query = new JPAQuery<>(session);
+        query.select(QEmployee.employee)
+                .from(QSkill.skill)
+                .innerJoin(QSkill.skill.employee, QEmployee.employee)
+                .where(QSkill.skill.skillName.eq("flexibility"));
+        query.fetchResults().getResults().forEach(System.out::println);
 
-        Root<Skill> skill = criteriaQuery.from(Skill.class);
-        Join<Skill, Employee> employee = skill.join(Skill_.employee);
-        criteriaQuery.select(employee).where(criteriaBuilder.equal(skill.get(Skill_.skillName), "persuasiveness"));
-        List<Employee> resultList = session.createQuery(criteriaQuery).getResultList();
-        resultList.forEach(System.out::println);
     }
-
+//
     private void getEmployeeByName(Session session) {
-        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-        CriteriaQuery<Employee> criteriaQuery = criteriaBuilder.createQuery(Employee.class);
+        JPAQuery<Employee> query = new JPAQuery<>(session);
+        query
+                .select(QEmployee.employee)
+                .from(QEmployee.employee)
+                .where(QEmployee.employee.name.eq("Alex"));
+        query.fetchResults().getResults().forEach(System.out::println);
 
-        // тот класс, от которого начинаем "поход" по join
-        Root<Employee> employee = criteriaQuery.from(Employee.class);
-        // небезопаный запрос
-//        criteriaQuery.select(employee).where(criteriaBuilder.equal(employee.get("name"), "Alex"));
-        criteriaQuery.select(employee).where(criteriaBuilder.equal(employee.get(Employee_.name), "Alex"));
-        session.createQuery(criteriaQuery).getResultList().forEach(System.out::println);
     }
 
 }
