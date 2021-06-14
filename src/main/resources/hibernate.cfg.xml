@@ -1,0 +1,21 @@
+<hibernate-configuration>
+    <session-factory>
+        <property name="connection.driver_class">org.postgresql.Driver</property>
+        <property name="hibernate.default_schema">demo</property>
+        <property name="connection.url">jdbc:postgresql://localhost:5432/postgres</property>
+        <property name="connection.username">postgres</property>
+        <property name="connection.password">1234</property>
+        <property name="dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+        <!-- Set "true" to show SQL statements -->
+        <property name="hibernate.format_sql">true</property>
+        <property name="hibernate.show_sql">true</property>
+<!--        <property name="hbm2ddl.auto">create-drop</property>-->
+
+        <!-- mapping class using annotation -->
+        <mapping class="com.example.demo.model.Employee"/>
+        <mapping class="com.example.demo.model.Manager"/>
+        <mapping class="com.example.demo.model.Developer"/>
+        <mapping class="com.example.demo.model.Skill"/>
+    </session-factory>
+
+</hibernate-configuration>
